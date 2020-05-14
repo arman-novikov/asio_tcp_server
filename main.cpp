@@ -4,7 +4,6 @@
 #include <boost/asio.hpp>
 
 using boost::asio::ip::tcp;
-constexpr uint16_t PORT = 9000U;
 std::string make_daytime_string()
 {
   using namespace std; // For time_t, time and ctime;
@@ -30,13 +29,21 @@ static const std::string HTML_HEADER =
     Connection: close\r\n\
     Content-Length: ";
 
-int main()
+int main(int argc, char* argv[])
 {
+    boost::asio::ip::address ip{};
+    uint16_t port;
+    if (argc < 3) {
+        std::cerr << "use argv: <ip> <port>" << std::endl;
+        return -22;
+    }
+
+    ip = boost::asio::ip::address::from_string(argv[1]);
+    port = static_cast<uint16_t>(std::stoi(argv[2]));
   try
   {
     boost::asio::io_service io_service;
-
-    tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), PORT));
+    tcp::acceptor acceptor(io_service, tcp::endpoint(ip, port)); // use tcp::v4() instead of ip to have a default ipaddr
 
     for (;;)
     {

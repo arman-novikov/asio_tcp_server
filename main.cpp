@@ -2,13 +2,14 @@
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
+#include <chrono>
 
 using boost::asio::ip::tcp;
 std::string make_daytime_string()
 {
-  using namespace std; // For time_t, time and ctime;
-  time_t now = time(nullptr);
-  return ctime(&now);
+  auto now = std::chrono::system_clock::now();
+  std::time_t t_c = std::chrono::system_clock::to_time_t(now);
+  return std::ctime(&t_c);
 }
 
 static const std::string HTML_PAGE =
@@ -52,9 +53,16 @@ int main(int argc, char* argv[])
       const std::string len = std::to_string(HTML_PAGE.length()) + std::string("\r\n\r\n");
       const std::string message = HTML_HEADER + len + HTML_PAGE;
 
-      boost::system::error_code ignored_error;
+      boost::system::error_code error;
       boost::asio::write(socket, boost::asio::buffer(message),
-          boost::asio::transfer_all(), ignored_error);
+          boost::asio::transfer_all(), error);
+
+    socket.close();
+    std::cerr << make_daytime_string()
+              << error.value() << " "
+              << error.category().name()
+              << std::endl;
+
     }
   }
   catch (std::exception& e)
